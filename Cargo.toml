@@ -1,0 +1,26 @@
+[workspace]
+resolver = "2"
+members = [
+    "contracts/expert_registry",
+    "contracts/capsule_registry",
+    "contracts/license_registry",
+    "contracts/usage_receipt_registry",
+    "contracts/settlement",
+]
+
+[workspace.dependencies]
+soroban-sdk = "27.0.6"
+
+[profile.release]
+opt-level = "z"
+overflow-checks = true
+debug = 0
+strip = "symbols"
+debug-assertions = false
+panic = "abort"
+codegen-units = 1
+lto = true
+
+[profile.release-with-logs]
+inherits = "release"
+debug-assertions = true
