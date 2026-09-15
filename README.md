@@ -40,6 +40,10 @@ In accordance with PRD Sections 17, 21, and 22, private knowledge and source mat
 cargo test --workspace
 ```
 
+Every state-changing method on all 5 contracts requires `require_auth()` on the correct principal, and every contract has a dedicated test proving an unauthorized caller (no matching signature/mock) is rejected, in addition to its happy-path test — 10 tests total. `cargo fmt --check` and `cargo check --workspace` are clean.
+
+A real Testnet deployment (public contract IDs, deployer public key, and tx hashes only — no private keys) is recorded in `deployments/testnet.json` and was used to verify `capsule_registry` end-to-end on-chain.
+
 ### WASM Compilation
 To compile optimized WASM bytecode for Soroban on-chain deployment:
 ```bash
