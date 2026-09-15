@@ -1,7 +1,5 @@
 #![no_std]
-use soroban_sdk::{
-    contract, contracterror, contractimpl, contracttype, Address, BytesN, Env,
-};
+use soroban_sdk::{contract, contracterror, contractimpl, contracttype, Address, BytesN, Env};
 
 #[contracterror]
 #[derive(Copy, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
@@ -92,7 +90,11 @@ impl LicenseRegistry {
 
     pub fn is_active(env: Env, license_ref: BytesN<32>, now: u64) -> bool {
         let key = DataKey::License(license_ref);
-        if let Some(record) = env.storage().persistent().get::<DataKey, LicenseRecord>(&key) {
+        if let Some(record) = env
+            .storage()
+            .persistent()
+            .get::<DataKey, LicenseRecord>(&key)
+        {
             !record.revoked && now >= record.starts_at && now <= record.expires_at
         } else {
             false
@@ -149,5 +151,37 @@ mod test {
         client.revoke(&license_ref);
         // Now inactive even within former validity window
         assert!(!client.is_active(&license_ref, &2000));
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_unauthorized_revoke_rejected() {
+        let env = Env::default();
+        env.mock_all_auths();
+
+        let contract_id = env.register(LicenseRegistry, ());
+        let client = LicenseRegistryClient::new(&env, &contract_id);
+
+        let licensor = Address::generate(&env);
+        let grantee = Address::generate(&env);
+        let license_ref = BytesN::from_array(&env, &[50u8; 32]);
+        let version_ref = BytesN::from_array(&env, &[51u8; 32]);
+        let terms_hash = BytesN::from_array(&env, &[52u8; 32]);
+
+        client.grant(
+            &license_ref,
+            &licensor,
+            &version_ref,
+            &grantee,
+            &terms_hash,
+            &1000,
+            &5000,
+        );
+
+        // No signature/mock is provided for the licensor-gated revoke below,
+        // so `record.licensor.require_auth()` must reject it — a grantee or
+        // third party must never be able to revoke someone else's license.
+        env.set_auths(&[]);
+        client.revoke(&license_ref);
     }
 }

@@ -1,7 +1,5 @@
 #![no_std]
-use soroban_sdk::{
-    contract, contracterror, contractimpl, contracttype, Address, BytesN, Env, Vec,
-};
+use soroban_sdk::{contract, contracterror, contractimpl, contracttype, Address, BytesN, Env, Vec};
 
 #[contracterror]
 #[derive(Copy, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
@@ -69,7 +67,9 @@ impl Settlement {
 
         let mut total_bps: u32 = 0;
         for share in shares.iter() {
-            total_bps = total_bps.checked_add(share.share_bps).ok_or(Error::InvalidSharesSum)?;
+            total_bps = total_bps
+                .checked_add(share.share_bps)
+                .ok_or(Error::InvalidSharesSum)?;
         }
         if total_bps != 10_000 {
             return Err(Error::InvalidSharesSum);
@@ -161,5 +161,32 @@ mod test {
 
         let record = client.get_settlement(&settlement_ref).unwrap();
         assert_eq!(record.total_amount, total_amount);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_unauthorized_settle_split_rejected() {
+        let env = Env::default();
+        env.mock_all_auths();
+
+        let contract_id = env.register(Settlement, ());
+        let client = SettlementClient::new(&env, &contract_id);
+
+        let payer = Address::generate(&env);
+        let c1 = Address::generate(&env);
+        let settlement_ref = BytesN::from_array(&env, &[80u8; 32]);
+        let shares = vec![
+            &env,
+            ContributorShare {
+                recipient: c1.clone(),
+                share_bps: 10_000,
+            },
+        ];
+
+        // No signature/mock is provided for the payer-gated call below, so
+        // `payer.require_auth()` must reject it — a third party must never be
+        // able to trigger a settlement/payout on someone else's behalf.
+        env.set_auths(&[]);
+        client.settle_split(&settlement_ref, &payer, &100_000, &shares);
     }
 }

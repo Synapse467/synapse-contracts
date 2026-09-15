@@ -1,7 +1,5 @@
 #![no_std]
-use soroban_sdk::{
-    contract, contracterror, contractimpl, contracttype, Address, BytesN, Env,
-};
+use soroban_sdk::{contract, contracterror, contractimpl, contracttype, Address, BytesN, Env};
 
 #[contracterror]
 #[derive(Copy, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
@@ -93,7 +91,9 @@ impl CapsuleRegistry {
             published_at: env.ledger().timestamp(),
         };
 
-        env.storage().persistent().set(&version_key, &version_record);
+        env.storage()
+            .persistent()
+            .set(&version_key, &version_record);
 
         capsule.latest_version = version_ref;
         env.storage().persistent().set(&capsule_key, &capsule);
@@ -151,5 +151,29 @@ mod test {
         let dup_eval = BytesN::from_array(&env, &[99u8; 32]);
         let res = client.try_publish_version(&capsule_ref, &version_ref, &manifest_hash, &dup_eval);
         assert_eq!(res, Err(Ok(Error::VersionAlreadyPublished)));
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_unauthorized_version_publish_rejected() {
+        let env = Env::default();
+        env.mock_all_auths();
+
+        let contract_id = env.register(CapsuleRegistry, ());
+        let client = CapsuleRegistryClient::new(&env, &contract_id);
+
+        let owner = Address::generate(&env);
+        let capsule_ref = BytesN::from_array(&env, &[40u8; 32]);
+        let metadata_hash = BytesN::from_array(&env, &[41u8; 32]);
+        client.register_capsule(&capsule_ref, &owner, &metadata_hash);
+
+        // No signature/mock is provided for the owner-gated call below, so
+        // `capsule.owner.require_auth()` must reject it, preserving
+        // immutability/ownership even against a caller who supplies no auth.
+        env.set_auths(&[]);
+        let version_ref = BytesN::from_array(&env, &[42u8; 32]);
+        let manifest_hash = BytesN::from_array(&env, &[43u8; 32]);
+        let eval_hash = BytesN::from_array(&env, &[44u8; 32]);
+        client.publish_version(&capsule_ref, &version_ref, &manifest_hash, &eval_hash);
     }
 }

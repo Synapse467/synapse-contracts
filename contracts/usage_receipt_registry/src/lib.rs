@@ -1,7 +1,5 @@
 #![no_std]
-use soroban_sdk::{
-    contract, contracterror, contractimpl, contracttype, Address, BytesN, Env,
-};
+use soroban_sdk::{contract, contracterror, contractimpl, contracttype, Address, BytesN, Env};
 
 #[contracterror]
 #[derive(Copy, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
@@ -133,5 +131,28 @@ mod test {
             &rando,
         );
         assert_eq!(res, Err(Ok(Error::Unauthorized)));
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_record_without_signature_rejected() {
+        let env = Env::default();
+        env.mock_all_auths();
+
+        let contract_id = env.register(UsageReceiptRegistry, ());
+        let client = UsageReceiptRegistryClient::new(&env, &contract_id);
+
+        let admin = Address::generate(&env);
+        client.init(&admin);
+
+        // Even though `recorder == admin` passes the business-logic check,
+        // no signature/mock is provided here, so `recorder.require_auth()`
+        // must still reject the call — the identity check alone is not
+        // sufficient authorization.
+        env.set_auths(&[]);
+        let receipt_ref = BytesN::from_array(&env, &[9u8; 32]);
+        let license_ref = BytesN::from_array(&env, &[10u8; 32]);
+        let usage_manifest_hash = BytesN::from_array(&env, &[11u8; 32]);
+        client.record(&receipt_ref, &license_ref, &usage_manifest_hash, &1, &admin);
     }
 }

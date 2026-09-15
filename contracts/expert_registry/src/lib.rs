@@ -1,7 +1,5 @@
 #![no_std]
-use soroban_sdk::{
-    contract, contracterror, contractimpl, contracttype, Address, BytesN, Env,
-};
+use soroban_sdk::{contract, contracterror, contractimpl, contracttype, Address, BytesN, Env};
 
 #[contracterror]
 #[derive(Copy, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
@@ -151,5 +149,28 @@ mod test {
         // Duplicate registration fails
         let res = client.try_register_expert(&expert_ref, &controller, &metadata_hash);
         assert_eq!(res, Err(Ok(Error::ExpertAlreadyRegistered)));
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_unauthorized_verification_update_rejected() {
+        let env = Env::default();
+        env.mock_all_auths();
+
+        let contract_id = env.register(ExpertRegistry, ());
+        let client = ExpertRegistryClient::new(&env, &contract_id);
+
+        let admin = Address::generate(&env);
+        client.init(&admin);
+
+        let expert_ref = BytesN::from_array(&env, &[5u8; 32]);
+        let controller = Address::generate(&env);
+        let metadata_hash = BytesN::from_array(&env, &[6u8; 32]);
+        client.register_expert(&expert_ref, &controller, &metadata_hash);
+
+        // No signature/mock is provided for the admin-gated call below, so
+        // `admin.require_auth()` must reject it rather than silently pass.
+        env.set_auths(&[]);
+        client.update_verification(&expert_ref, &(VerificationStatus::Verified as u32));
     }
 }
