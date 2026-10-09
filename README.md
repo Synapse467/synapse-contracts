@@ -1,55 +1,69 @@
-# Synapse Smart Contracts (Stellar / Soroban)
+# synapse-contracts
 
-Soroban smart contracts workspace for the **Synapse** platform, anchoring expertise ownership, version immutability, access licensing, usage verification, and revenue settlements on Stellar.
+Three small Soroban contracts that give [Synapse](https://github.com/Synapse467/synapse-cli/blob/main/docs/overview.md) an independent public record on Stellar: **which version of a capsule existed, who licensed it, and how it was used.**
 
-## Contracts Overview
+Synapse works without them. Capsules, licenses and usage logs are files that are verified offline. These contracts exist so that three things can be proved to a stranger without asking the owner:
 
-In accordance with PRD Sections 17, 21, and 22, private knowledge and source material remain strictly off-chain. Only cryptographic hashes and proofs are recorded on-chain:
+| Contract | What it records | Why anyone would care |
+|---|---|---|
+| [`capsule_anchor`](contracts/capsule_anchor) | The hash of each published version of a capsule, in order | An owner cannot quietly swap the file after you bought it. A buyer can check the file they hold against the anchor. |
+| [`license_ledger`](contracts/license_ledger) | That a license was granted, and whether it has been revoked | Revocation becomes public and immediate for anyone who checks, not just for people the owner can reach. |
+| [`usage_ledger`](contracts/usage_ledger) | Sealed batches of usage: a hash, a count and a period | A gap-free, hash-linked receipt trail that both sides can show, without revealing a single question. |
 
-1. **`expert_registry`**:
-   - Manages expert registration via opaque hashes (`expert_ref`, `controller`, `metadata_hash`).
-   - Tracks verification status transitions (`Unverified`, `Pending`, `Verified`, `Revoked`).
-   - Invariant: Zero PII or resume details stored on-chain.
+## Design: no admin, no registry, no tokens
 
-2. **`capsule_registry`**:
-   - Registers capsules and publishes version manifests (`manifest_hash`, `eval_hash`).
-   - Invariant: Published version entries are strictly immutable (attempting to overwrite an existing version errors out).
+The contracts have **no owner, no admin, no upgrade path and no fees**. Nobody deploys "their own copy": everyone uses the same deployment, and every entry is namespaced by the account that wrote it.
 
-3. **`license_registry`**:
-   - Issues cryptographic access grants (`grantee`, `terms_hash`, validity window).
-   - Licensor-authorized revocation.
-   - Enforces active status check: `is_active(license_ref, now) -> bool`.
+- A record is keyed by `(account, reference)`. Only that account can write or read-modify it (`require_auth`), so there is nothing to impersonate and nothing to configure.
+- References are 32-byte hashes derived from content (`sha256("synapse.capsule\n" + owner + "\n" + slug)`), so two owners can use the same slug without colliding.
+- Nothing personal is stored: hashes, counts and timestamps only. Questions, answers and capsule contents never touch the chain.
+- Writes extend the storage lifetime of everything they touch (see [Storage lifetime](docs/CONTRACTS.md#storage-lifetime)), so records an owner keeps writing to do not expire.
 
-4. **`usage_receipt_registry`**:
-   - Records verifiable usage batch manifests (`usage_manifest_hash`, `period`).
-   - Authorized by recorder / platform authority.
-   - Invariant: Zero raw queries, identities, or responses stored on-chain.
+This is why Synapse needs no server, account system or configuration: the chain is a shared, neutral notary that the command line talks to directly.
 
-5. **`settlement`**:
-   - Disburses revenue splits based on basis points (`share_bps`).
-   - Enforces 100% (10,000 bps) allocation invariants and guarantees zero rounding loss.
+## Deployment
 
-## Building and Testing
+Public Testnet deployment, used by default by [`synapse-core`](https://github.com/Synapse467/synapse-core):
 
-### Prerequisites
-- Rust 1.84+ (tested on Rust 1.97)
-- `wasm32v1-none` target (`rustup target add wasm32v1-none`)
+| Contract | Address |
+|---|---|
+| `capsule_anchor` | `CAII7IQVEDGYE3VMO4JZA2V7JMPSHIISJFBX2LWV7XPAP5GQUL6UPXQP` |
+| `license_ledger` | `CAI26T22K4EU4M6OQA7RJUAV5PQZYFJQJIIAPW2FUXJCQ3ADAWQMBMFN` |
+| `usage_ledger` | `CDNVTWXTSQ66D34KKCBUIESF2OSA67L7WU7SWOGSLI7IYONVHLF7XHKX` |
 
-### Host Unit Tests
+The same data is in [`deployments/testnet.json`](deployments/testnet.json). Testnet is for development: it is reset periodically and its funds have no value. A Mainnet deployment is a deliberate, separate step and is not part of this release.
+
+## Build and test
+
 ```bash
-cargo test --workspace
+cargo test                                   # all three contracts
+cargo build --release --target wasm32v1-none # the deployable WASM
 ```
 
-Every state-changing method on all 5 contracts requires `require_auth()` on the correct principal, and every contract has a dedicated test proving an unauthorized caller (no matching signature/mock) is rejected, in addition to its happy-path test — 10 tests total. `cargo fmt --check` and `cargo check --workspace` are clean.
+On Windows with the GNU toolchain, test binaries can exceed the exported-symbol limit; run `RUSTFLAGS="-C link-arg=-Wl,--exclude-all-symbols" cargo test`.
 
-A real Testnet deployment (public contract IDs, deployer public key, and tx hashes only — no private keys) is recorded in `deployments/testnet.json` and was used to verify `capsule_registry` end-to-end on-chain.
+## Using the contracts
 
-### WASM Compilation
-To compile optimized WASM bytecode for Soroban on-chain deployment:
+Almost nobody should call them directly. The Synapse command line does it for you, creating and funding an account on first use:
+
 ```bash
-cargo rustc --package expert_registry --target wasm32v1-none --release --crate-type cdylib
-cargo rustc --package capsule_registry --target wasm32v1-none --release --crate-type cdylib
-cargo rustc --package license_registry --target wasm32v1-none --release --crate-type cdylib
-cargo rustc --package usage_receipt_registry --target wasm32v1-none --release --crate-type cdylib
-cargo rustc --package settlement --target wasm32v1-none --release --crate-type cdylib
+synapse chain anchor my-capsule.capsule.json   # timestamp a version
+synapse chain status my-capsule.capsule.json   # check a file against its anchor
 ```
+
+To call them from your own code, use `synapse-core`'s `chain` package (Go), or invoke the contracts with any Soroban SDK. The full interface, error codes and events are in [`docs/CONTRACTS.md`](docs/CONTRACTS.md).
+
+## Repositories
+
+This is one of four repositories; see [`../REPOSITORIES.md`](https://github.com/Synapse467/synapse-core/blob/main/docs/REPOSITORIES.md) for how they fit together.
+
+| Repository | Role |
+|---|---|
+| **synapse-contracts** (this one) | The on-chain record |
+| [synapse-core](https://github.com/Synapse467/synapse-core) | The formats and rules: capsules, licenses, signatures, usage logs, and the Stellar client |
+| [synapse-engine](https://github.com/Synapse467/synapse-engine) | Answering questions from a capsule, extracting knowledge, evaluating a capsule, the HTTP gateway and the MCP server |
+| [synapse-cli](https://github.com/Synapse467/synapse-cli) | The `synapse` command |
+
+## License
+
+MIT. See [LICENSE](LICENSE). Security reports: see [SECURITY.md](SECURITY.md).

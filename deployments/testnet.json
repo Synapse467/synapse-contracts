@@ -1,23 +1,12 @@
 {
-  "network": "Test SDF Network ; September 2015",
+  "network": "testnet",
   "networkPassphrase": "Test SDF Network ; September 2015",
   "rpcUrl": "https://soroban-testnet.stellar.org",
-  "horizonUrl": "https://horizon-testnet.stellar.org",
-  "deployedAt": "2026-09-15",
-  "deployerPublicKey": "GBEKRS67IXUCZX6CZWA2327XBNICOAYNGXIEFHLZXCZUQO75IPXXNB5Z",
+  "friendbot": "https://friendbot.stellar.org",
   "contracts": {
-    "expert_registry": "CAHZYT36ZJHWHQ7VMRVZSBLTRT2J2NKRUIJB2PXIL2WR5HF7NRDYF3TV",
-    "capsule_registry": "CD5RYFIGHQOL4A5KY23LSTQTXXIHEJXMBMHGTXFS3PQ27WWVABU3X4EW",
-    "license_registry": "CBZ2JCLWRLEMYNSFLJCVUMVU3JCYKGSV7MTNPZTLZU4I2KPLUYSVTHLH",
-    "usage_receipt_registry": "CABB6E7SNEPOOPTBUV4KOXIEIFC3C3S5SQDSELJKYJMLKAYEKNBFVK7J",
-    "settlement": "CAH23DRBARFK7MQE7U7S7KL5XC4L3FX635SW72EIPERRGEM3HSFWSYID"
+    "capsuleAnchor": "CAII7IQVEDGYE3VMO4JZA2V7JMPSHIISJFBX2LWV7XPAP5GQUL6UPXQP",
+    "licenseLedger": "CAI26T22K4EU4M6OQA7RJUAV5PQZYFJQJIIAPW2FUXJCQ3ADAWQMBMFN",
+    "usageLedger": "CDNVTWXTSQ66D34KKCBUIESF2OSA67L7WU7SWOGSLI7IYONVHLF7XHKX"
   },
-  "verifiedInvocation": {
-    "method": "capsule_registry.register_capsule + publish_version + get_version",
-    "txHashes": [
-      "bdda551d2419ddb3a1b38c86d68b115f720fa8151193592f8f5fbf87ed097529",
-      "7bad85ecc9dc3aa57aa03fa338fc53221750c9d12c33543ff7e56e8e6b671c53"
-    ],
-    "explorer": "https://stellar.expert/explorer/testnet/tx/7bad85ecc9dc3aa57aa03fa338fc53221750c9d12c33543ff7e56e8e6b671c53"
-  }
+  "notes": "Permissionless: no admin, no upgrade, no fees. Every record is namespaced by the account that wrote it. Testnet is reset periodically; redeploy from this repository if it is."
 }

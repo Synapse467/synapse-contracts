@@ -1,3 +1,16 @@
+# Secrets and local state never belong in the repository.
+.env
+.env.*
+*.env
+identity.json
+*.seed
+.synapse/
+
+# Build output
+dist/
 target/
-**/*.rs.bk
+*.exe
 *.wasm
+coverage.out
+.idea/
+.vscode/
