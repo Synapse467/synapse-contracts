@@ -1,4 +1,28 @@
-# synapse-contracts
+<p align="center"><img src="assets/logo.svg" alt="Synapse logo" width="112"></p>
+
+<h1 align="center">synapse-contracts</h1>
+
+<p align="center"><b>Three permissionless Soroban contracts that anchor capsule versions, licenses and usage on Stellar.</b></p>
+
+<p align="center">
+  <a href="https://github.com/Synapse467/synapse-contracts/actions/workflows/ci.yml"><img src="https://github.com/Synapse467/synapse-contracts/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/Synapse467/synapse-contracts/blob/main/LICENSE"><img src="https://img.shields.io/github/license/Synapse467/synapse-contracts?color=blue" alt="License: MIT"></a>
+  <a href="https://github.com/Synapse467/synapse-contracts/releases"><img src="https://img.shields.io/github/v/release/Synapse467/synapse-contracts?color=brightgreen" alt="Latest release"></a>
+  <a href="https://github.com/Synapse467/synapse-contracts/issues"><img src="https://img.shields.io/github/issues/Synapse467/synapse-contracts?color=orange" alt="Open issues"></a>
+  <a href="https://github.com/Synapse467/synapse-contracts/issues?q=is%3Aopen+label%3A%22help+wanted%22"><img src="https://img.shields.io/badge/help%20wanted-welcome-8A2BE2" alt="Help wanted"></a>
+  <img src="https://img.shields.io/badge/built%20for-Stellar-black" alt="Built for Stellar">
+</p>
+
+<p align="center">
+  <a href="https://cjay-1.gitbook.io/synapse-docs/">Documentation</a> ·
+  <a href="https://github.com/Synapse467/synapse-contracts/releases">Releases</a> ·
+  <a href="https://github.com/Synapse467/synapse-contracts/issues">Issues</a> ·
+  <a href="CONTRIBUTING.md">Contributing</a> ·
+  <a href="SECURITY.md">Security</a>
+</p>
+
+---
+
 
 Three small Soroban contracts that give [Synapse](https://github.com/Synapse467/synapse-cli/blob/main/docs/overview.md) an independent public record on Stellar: **which version of a capsule existed, who licensed it, and how it was used.**
 
@@ -67,3 +91,17 @@ This is one of four repositories; see [`../REPOSITORIES.md`](https://github.com/
 ## License
 
 MIT. See [LICENSE](LICENSE). Security reports: see [SECURITY.md](SECURITY.md).
+
+## Maintainers
+
+| Maintainer | Role | Contact |
+| --- | --- | --- |
+| [Synapse467](https://github.com/Synapse467) | Organization owner, releases | [GitHub issues](https://github.com/Synapse467/synapse-contracts/issues) |
+
+## Community
+
+Ask questions and propose changes in [GitHub issues](https://github.com/Synapse467/synapse-contracts/issues). Read the [documentation](https://cjay-1.gitbook.io/synapse-docs/) first; the [FAQ](https://cjay-1.gitbook.io/synapse-docs/project/faq) answers the common questions.
+
+## Contributors
+
+<a href="https://github.com/Synapse467/synapse-contracts/graphs/contributors"><img src="https://contrib.rocks/image?repo=Synapse467/synapse-contracts" alt="Contributors"></a>
